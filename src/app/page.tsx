@@ -49,6 +49,61 @@ const getComponentData = (index: number) => {
   };
 };
 
+// Popover component with manual state management (similar to v3)
+const PopoverWithState = ({
+  componentData,
+  index,
+}: {
+  componentData: any;
+  index: number;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} placement="top">
+      <PopoverTrigger>
+        <Card
+          size="sm"
+          cursor="pointer"
+          transition="all 0.2s"
+          _hover={{
+            transform: "scale(1.02)",
+            shadow: "lg",
+            borderColor: "blue.300",
+          }}
+          onMouseEnter={() => setIsOpen(true)}
+          onMouseLeave={() => setIsOpen(false)}
+        >
+          <CardBody>
+            <Text>Component {index}</Text>
+            <Button size="sm" colorScheme="blue">
+              Action {index}
+            </Button>
+          </CardBody>
+        </Card>
+      </PopoverTrigger>
+      <PopoverContent maxW="400px">
+        <PopoverArrow />
+        <PopoverBody>
+          <Text
+            fontSize="sm"
+            fontWeight="bold"
+            color="blue.500"
+            mb={2}
+          >
+            Component Details
+          </Text>
+          <Text fontSize="xs">ID: {componentData.componentId}</Text>
+          <Text fontSize="xs">Type: {componentData.componentType}</Text>
+          <Text fontSize="xs">
+            Optimized: {componentData.isOptimized ? "Yes" : "No"}
+          </Text>
+        </PopoverBody>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 // Stress Test Scenarios
 const ComponentFloodTest = () => {
   const [componentCount, setComponentCount] = useState(100);
@@ -90,47 +145,11 @@ const ComponentFloodTest = () => {
           .map((_, i) => {
             const componentData = getComponentData(i);
             return (
-              <Popover key={i} trigger="hover" placement="top">
-                <PopoverTrigger>
-                  <Card
-                    size="sm"
-                    cursor="pointer"
-                    transition="all 0.2s"
-                    _hover={{
-                      transform: "scale(1.02)",
-                      shadow: "lg",
-                      borderColor: "blue.300",
-                    }}
-                  >
-                    <CardBody>
-                      <Text>Component {i}</Text>
-                      <Button size="sm" colorScheme="blue">
-                        Action {i}
-                      </Button>
-                    </CardBody>
-                  </Card>
-                </PopoverTrigger>
-                <PopoverContent maxW="400px">
-                  <PopoverArrow />
-                  <PopoverBody>
-                    <Text
-                      fontSize="sm"
-                      fontWeight="bold"
-                      color="blue.500"
-                      mb={2}
-                    >
-                      Component Details
-                    </Text>
-                    <Text fontSize="xs">ID: {componentData.componentId}</Text>
-                    <Text fontSize="xs">
-                      Type: {componentData.componentType}
-                    </Text>
-                    <Text fontSize="xs">
-                      Optimized: {componentData.isOptimized ? "Yes" : "No"}
-                    </Text>
-                  </PopoverBody>
-                </PopoverContent>
-              </Popover>
+              <PopoverWithState
+                key={i}
+                componentData={componentData}
+                index={i}
+              />
             );
           })}
       </Grid>
