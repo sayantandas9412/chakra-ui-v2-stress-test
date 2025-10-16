@@ -1,113 +1,266 @@
-import Image from 'next/image'
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Card,
+  CardBody,
+  CardHeader,
+  Heading,
+  Text,
+  Input,
+  Badge,
+  HStack,
+  VStack,
+  Grid,
+  Spinner,
+  Container,
+  Center,
+  SimpleGrid,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverBody,
+  PopoverArrow,
+} from "@chakra-ui/react";
+
+// Performance measurement utility
+const measurePerformance = (fn: () => void) => {
+  if (typeof window === "undefined") {
+    // Server-side: return a fixed value to avoid hydration mismatch
+    return 1.5;
+  }
+  const start = performance.now();
+  fn();
+  const end = performance.now();
+  return end - start;
+};
+
+// Helper function to generate simple component data
+const getComponentData = (index: number) => {
+  const componentType = index % 2 === 0 ? "Functional" : "Class";
+  const isOptimized = index % 3 === 0; // Every 3rd component is optimized
+
+  return {
+    componentId: index,
+    componentType,
+    isOptimized,
+  };
+};
+
+// Stress Test Scenarios
+const ComponentFloodTest = () => {
+  const [componentCount, setComponentCount] = useState(100);
+  const [lastRenderTime, setLastRenderTime] = useState(0);
+
+  const addComponents = () => {
+    const renderTime = measurePerformance(() => {
+      setComponentCount((prev) => prev + 1000);
+    });
+    setLastRenderTime(renderTime);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+    <Box p={4} border="1px solid" borderRadius="md" mb={4}>
+      <Heading size="md" mb={4}>
+        Component Flood Test
+      </Heading>
+      <HStack mb={4}>
+        <Text>Component Count:</Text>
+        <Input
+          type="number"
+          value={componentCount}
+          onChange={(e) => setComponentCount(Number(e.target.value))}
+          w="100px"
         />
-      </div>
+        <Button onClick={addComponents}>Add 1000 Components</Button>
+        <Button onClick={() => setComponentCount(100)} colorScheme="gray">
+          Reset
+        </Button>
+      </HStack>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+      <Text mb={4} fontSize="sm" color="gray.600">
+        Total components: {componentCount}
+      </Text>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+      <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2}>
+        {Array(componentCount)
+          .fill(0)
+          .map((_, i) => {
+            const componentData = getComponentData(i);
+            return (
+              <Popover key={i} trigger="hover" placement="top">
+                <PopoverTrigger>
+                  <Card
+                    size="sm"
+                    cursor="pointer"
+                    transition="all 0.2s"
+                    _hover={{
+                      transform: "scale(1.02)",
+                      shadow: "lg",
+                      borderColor: "blue.300",
+                    }}
+                  >
+                    <CardBody>
+                      <Text>Component {i}</Text>
+                      <Button size="sm" colorScheme="blue">
+                        Action {i}
+                      </Button>
+                    </CardBody>
+                  </Card>
+                </PopoverTrigger>
+                <PopoverContent maxW="400px">
+                  <PopoverArrow />
+                  <PopoverBody>
+                    <Text
+                      fontSize="sm"
+                      fontWeight="bold"
+                      color="blue.500"
+                      mb={2}
+                    >
+                      Component Details
+                    </Text>
+                    <Text fontSize="xs">ID: {componentData.componentId}</Text>
+                    <Text fontSize="xs">Type: {componentData.componentType}</Text>
+                    <Text fontSize="xs">
+                      Optimized: {componentData.isOptimized ? "Yes" : "No"}
+                    </Text>
+                  </PopoverBody>
+                </PopoverContent>
+              </Popover>
+            );
+          })}
+      </Grid>
+    </Box>
+  );
+};
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
+const RapidStateChangeTest = () => {
+  const [count, setCount] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [updatesPerSecond, setUpdatesPerSecond] = useState(0);
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+  useEffect(() => {
+    if (!isRunning) return;
+
+    let frameCount = 0;
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      setCount((prev) => prev + 1);
+      frameCount++;
+
+      // Calculate updates per second every second
+      if (frameCount % 100 === 0) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        setUpdatesPerSecond(Math.round(frameCount / elapsed));
+      }
+    }, 10); // 100 updates per second
+
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+  return (
+    <Box p={4} border="1px solid" borderRadius="md" mb={4}>
+      <Heading size="md" mb={4}>
+        Rapid State Change Test
+      </Heading>
+      <HStack mb={4}>
+        <Button
+          colorScheme={isRunning ? "red" : "green"}
+          onClick={() => setIsRunning(!isRunning)}
         >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+          {isRunning ? "Stop" : "Start"} Rapid Updates
+        </Button>
+        <Button
+          onClick={() => {
+            setCount(0);
+            setUpdatesPerSecond(0);
+          }}
+        >
+          Reset
+        </Button>
+      </HStack>
+
+      <Text mb={2} fontSize="lg" fontWeight="bold">
+        Count: {count.toLocaleString()}
+      </Text>
+      <Text mb={2}>Updates per second: {updatesPerSecond}</Text>
+      <Text mb={4} fontSize="sm" color="gray.600">
+        This tests how many state updates Chakra UI v2 can handle per second
+      </Text>
+
+      <Box>
+        {Array(20)
+          .fill(0)
+          .map((_, i) => (
+            <Badge key={i} colorScheme="blue" mr={2} mb={2}>
+              Badge {count + i}
+            </Badge>
+          ))}
+      </Box>
+    </Box>
+  );
+};
+
+// Main Stress Test Page
+export default function StressTestV2() {
+  const [activeTest, setActiveTest] = useState("all");
+
+  const tests = [
+    { id: "all", label: "All Tests" },
+    { id: "flood", label: "Component Flood" },
+    { id: "state", label: "Rapid State Changes" },
+    { id: "interactive", label: "Interactive Components" },
+  ];
+
+  return (
+    <Container maxW="container.xl" py={8}>
+      <Box mb={8}>
+        <Heading size="lg" mb={4}>
+          Chakra UI v2 Stress Test
+        </Heading>
+        <Text mb={4}>
+          Test Chakra UI v2 components under various stress conditions to
+          evaluate performance and responsiveness.
+        </Text>
+
+        <HStack gap={2} mb={4}>
+          {tests.map((test) => (
+            <Button
+              key={test.id}
+              size="sm"
+              colorScheme={activeTest === test.id ? "blue" : "gray"}
+              onClick={() => setActiveTest(test.id)}
+            >
+              {test.label}
+            </Button>
+          ))}
+        </HStack>
+      </Box>
+
+      <Grid templateColumns="1fr 300px" gap={6}>
+        <Box>
+          {(activeTest === "all" || activeTest === "flood") && (
+            <ComponentFloodTest />
+          )}
+          {(activeTest === "all" || activeTest === "state") && (
+            <RapidStateChangeTest />
+          )}
+          {activeTest === "interactive" && (
+            <Box p={4} border="1px solid" borderRadius="md" mb={4}>
+              <Heading size="md" mb={4}>
+                Interactive Component Test
+              </Heading>
+              <Text mb={4}>
+                Test various interactive Chakra UI v2 components and their
+                responsiveness.
+              </Text>
+            </Box>
+          )}
+        </Box>
+      </Grid>
+    </Container>
+  );
 }
