@@ -122,7 +122,9 @@ const ComponentFloodTest = () => {
                       Component Details
                     </Text>
                     <Text fontSize="xs">ID: {componentData.componentId}</Text>
-                    <Text fontSize="xs">Type: {componentData.componentType}</Text>
+                    <Text fontSize="xs">
+                      Type: {componentData.componentType}
+                    </Text>
                     <Text fontSize="xs">
                       Optimized: {componentData.isOptimized ? "Yes" : "No"}
                     </Text>
