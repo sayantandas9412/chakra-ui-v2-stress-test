@@ -49,7 +49,7 @@ const getComponentData = (index: number) => {
   };
 };
 
-// Popover component with manual state management (similar to v3)
+// Popover component with manual state management and stress event listeners
 const PopoverWithState = ({
   componentData,
   index,
@@ -58,6 +58,16 @@ const PopoverWithState = ({
   index: number;
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [moveCount, setMoveCount] = useState(0);
+
+  const handleClick = () => {
+    setClickCount((prev) => prev + 1);
+  };
+
+  const handleMouseMove = () => {
+    setMoveCount((prev) => prev + 1);
+  };
 
   return (
     <Popover isOpen={isOpen} onClose={() => setIsOpen(false)} placement="top">
@@ -66,6 +76,7 @@ const PopoverWithState = ({
           size="sm"
           cursor="pointer"
           transition="all 0.2s"
+          data-testid="component-card"
           _hover={{
             transform: "scale(1.02)",
             shadow: "lg",
@@ -73,12 +84,17 @@ const PopoverWithState = ({
           }}
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => setIsOpen(false)}
+          onClick={handleClick}
+          onMouseMove={handleMouseMove}
         >
           <CardBody>
             <Text>Component {index}</Text>
-            <Button size="sm" colorScheme="blue">
-              Action {index}
+            <Button size="sm" colorScheme="blue" onClick={handleClick}>
+              Action {index} (Clicks: {clickCount})
             </Button>
+            <Text fontSize="xs" color="gray.500">
+              Moves: {moveCount}
+            </Text>
           </CardBody>
         </Card>
       </PopoverTrigger>
@@ -93,15 +109,256 @@ const PopoverWithState = ({
           <Text fontSize="xs">
             Optimized: {componentData.isOptimized ? "Yes" : "No"}
           </Text>
+          <Text fontSize="xs" color="green.500">
+            Clicks: {clickCount} | Moves: {moveCount}
+          </Text>
         </PopoverBody>
       </PopoverContent>
     </Popover>
   );
 };
 
+// Automated Performance Test
+const AutomatedPerformanceTest = ({
+  onSetComponentCount,
+}: {
+  onSetComponentCount: (count: number) => void;
+}) => {
+  const [isRunning, setIsRunning] = useState(false);
+  const [testResults, setTestResults] = useState<any>(null);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isResetting, setIsResetting] = useState(false);
+  const [selectedCount, setSelectedCount] = useState(10000);
+
+  const runPerformanceTest = async () => {
+    // Set loading state immediately
+    setIsRunning(true);
+    setTestResults(null);
+    setCurrentStep(0);
+
+    // Small delay to ensure UI updates
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const results = {
+      totalTime: 0,
+      finalComponentCount: 0,
+      renderTime: 0,
+      scrollTime: 0,
+    };
+
+    // Start timing
+    const startTime = performance.now();
+    setCurrentStep(1);
+
+    // Update state to render selected number of components
+    onSetComponentCount(selectedCount);
+
+    // Wait for all components to be rendered
+    await new Promise((resolve) => {
+      const checkDOM = () => {
+        const componentElements = document.querySelectorAll(
+          '[data-testid="component-card"]'
+        );
+        const allCards = document.querySelectorAll(".chakra-card");
+        const actualCount = Math.max(componentElements.length, allCards.length);
+
+        console.log(
+          `Found ${actualCount} components, waiting for ${selectedCount}...`
+        );
+
+        if (actualCount >= selectedCount) {
+          results.finalComponentCount = actualCount;
+          resolve(true);
+        } else {
+          // Timeout after 15 seconds
+          if (performance.now() - startTime > 15000) {
+            console.log("Timeout reached, proceeding with current count");
+            results.finalComponentCount = actualCount;
+            resolve(true);
+          } else {
+            setTimeout(checkDOM, 50); // Check every 50ms
+          }
+        }
+      };
+      checkDOM();
+    });
+
+    // Record render completion time
+    const renderEndTime = performance.now();
+    results.renderTime = renderEndTime - startTime;
+
+    // Start scroll testing
+    console.log("Starting scroll test...");
+    const scrollStartTime = performance.now();
+
+    // Scroll the entire page
+    console.log("Starting page scroll test...");
+    console.log("Page scrollWidth:", document.documentElement.scrollWidth);
+    console.log("Page scrollHeight:", document.documentElement.scrollHeight);
+    console.log("Page clientWidth:", document.documentElement.clientWidth);
+    console.log("Page clientHeight:", document.documentElement.clientHeight);
+
+    // Add visual indicator to body
+    const originalBodyStyle = document.body.style.border;
+    document.body.style.border = "5px solid red";
+
+    // Horizontal scroll test: left to right
+    console.log("Scrolling page right...", "scrollLeft:", window.pageXOffset);
+    window.scrollTo(document.documentElement.scrollWidth, 0);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for scroll to complete
+    console.log("After right scroll:", "scrollLeft:", window.pageXOffset);
+
+    // Horizontal scroll test: right to left
+    console.log("Scrolling page left...");
+    window.scrollTo(0, 0);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for scroll to complete
+    console.log("After left scroll:", "scrollLeft:", window.pageXOffset);
+
+    // Vertical scroll test: top to bottom
+    console.log("Scrolling page down...", "scrollTop:", window.pageYOffset);
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for scroll to complete
+    console.log("After down scroll:", "scrollTop:", window.pageYOffset);
+
+    // Vertical scroll test: bottom to top
+    console.log("Scrolling page up...");
+    window.scrollTo(0, 0);
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Wait for scroll to complete
+    console.log("After up scroll:", "scrollTop:", window.pageYOffset);
+
+    // Remove visual indicator
+    document.body.style.border = originalBodyStyle;
+
+    const scrollEndTime = performance.now();
+    results.scrollTime = scrollEndTime - scrollStartTime;
+
+    // End timing
+    const endTime = performance.now();
+    results.totalTime = endTime - startTime;
+
+    setTestResults(results);
+    setIsRunning(false);
+    setCurrentStep(0);
+
+    // Reset components back to 100 after scroll test completion
+    setIsResetting(true);
+    onSetComponentCount(100);
+    setTimeout(() => {
+      setIsResetting(false);
+    }, 500); // Show resetting indicator for 500ms
+  };
+
+  return (
+    <Box p={4} border="1px solid" borderRadius="md" mb={4} bg="gray.50">
+      <Heading size="md" mb={4} color="purple.600">
+        🚀 Automated Performance Test
+      </Heading>
+
+      <VStack align="start" spacing={4}>
+        {/* Component Count Selection */}
+        <Box>
+          <Text mb={2} fontWeight="bold">
+            Select Component Count:
+          </Text>
+          <HStack spacing={2} wrap="wrap">
+            {[2000, 5000, 10000, 20000].map((count) => (
+              <Button
+                key={count}
+                size="sm"
+                colorScheme={selectedCount === count ? "blue" : "gray"}
+                variant={selectedCount === count ? "solid" : "outline"}
+                onClick={() => setSelectedCount(count)}
+                isDisabled={isRunning}
+              >
+                {count.toLocaleString()}
+              </Button>
+            ))}
+          </HStack>
+        </Box>
+
+        <Button
+          colorScheme="purple"
+          size="lg"
+          onClick={runPerformanceTest}
+          isLoading={isRunning}
+          loadingText={`Running test...`}
+          disabled={isRunning}
+        >
+          Start Performance Test
+        </Button>
+
+        {isRunning && (
+          <Box>
+            <Text>
+              Rendering {selectedCount.toLocaleString()} components...
+            </Text>
+            <Text>Measuring total render time...</Text>
+            <Text>Please wait...</Text>
+          </Box>
+        )}
+
+        {isResetting && (
+          <Box>
+            <Text color="orange.500">Resetting components back to 100...</Text>
+          </Box>
+        )}
+
+        {testResults && (
+          <Box
+            p={4}
+            bg="white"
+            borderRadius="md"
+            border="1px solid"
+            borderColor="gray.200"
+          >
+            <Heading size="sm" mb={3} color="green.600">
+              ✅ Test Results
+            </Heading>
+
+            <VStack align="start" spacing={2}>
+              <Text fontSize="lg" fontWeight="bold" color="green.600">
+                <strong>Total Test Time:</strong>{" "}
+                {testResults.totalTime.toFixed(2)}ms
+              </Text>
+              <Text>
+                <strong>Components Rendered:</strong>{" "}
+                {testResults.finalComponentCount.toLocaleString()}
+              </Text>
+              <Text>
+                <strong>Render Time:</strong>{" "}
+                {testResults.renderTime.toFixed(2)}ms
+              </Text>
+              <Text>
+                <strong>Scroll Test Time:</strong>{" "}
+                {testResults.scrollTime.toFixed(2)}ms
+              </Text>
+              <Text>
+                <strong>Components per Second:</strong>{" "}
+                {Math.round(
+                  testResults.finalComponentCount /
+                    (testResults.renderTime / 1000)
+                ).toLocaleString()}
+              </Text>
+              <Text fontSize="sm" color="gray.600">
+                Complete test: render + scroll for{" "}
+                {selectedCount.toLocaleString()} Chakra UI v2 components
+              </Text>
+            </VStack>
+          </Box>
+        )}
+      </VStack>
+    </Box>
+  );
+};
+
 // Stress Test Scenarios
-const ComponentFloodTest = () => {
-  const [componentCount, setComponentCount] = useState(100);
+const ComponentFloodTest = ({
+  componentCount,
+  setComponentCount,
+}: {
+  componentCount: number;
+  setComponentCount: (count: number) => void;
+}) => {
   const [lastRenderTime, setLastRenderTime] = useState(0);
 
   const addComponents = () => {
@@ -112,7 +369,13 @@ const ComponentFloodTest = () => {
   };
 
   return (
-    <Box p={4} border="1px solid" borderRadius="md" mb={4}>
+    <Box
+      p={4}
+      border="1px solid"
+      borderRadius="md"
+      mb={4}
+      data-testid="component-flood-test"
+    >
       <Heading size="md" mb={4}>
         Component Flood Test
       </Heading>
@@ -131,23 +394,65 @@ const ComponentFloodTest = () => {
       </HStack>
 
       <Text mb={4} fontSize="sm" color="gray.600">
-        Total components: {componentCount}
+        Total components: {componentCount} | Table:{" "}
+        {Math.ceil(Math.sqrt(componentCount))} rows ×{" "}
+        {Math.ceil(componentCount / Math.ceil(Math.sqrt(componentCount)))}{" "}
+        columns
       </Text>
 
-      <Grid templateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2}>
-        {Array(componentCount)
-          .fill(0)
-          .map((_, i) => {
-            const componentData = getComponentData(i);
-            return (
-              <PopoverWithState
-                key={i}
-                componentData={componentData}
-                index={i}
-              />
-            );
-          })}
-      </Grid>
+      <Box overflowX="auto" overflowY="auto">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <tbody>
+            {(() => {
+              // Calculate optimal grid dimensions
+              const totalComponents = componentCount;
+
+              // Calculate square root to get balanced dimensions
+              const sqrt = Math.sqrt(totalComponents);
+              const maxRows = Math.ceil(sqrt);
+              const maxCols = Math.ceil(totalComponents / maxRows);
+
+              // Create rows
+              return Array(maxRows)
+                .fill(0)
+                .map((_, rowIndex) => {
+                  return (
+                    <tr key={rowIndex}>
+                      {Array(maxCols)
+                        .fill(0)
+                        .map((_, colIndex) => {
+                          const componentIndex = colIndex * maxRows + rowIndex;
+
+                          if (componentIndex >= totalComponents) {
+                            return (
+                              <td
+                                key={colIndex}
+                                style={{ padding: "4px", minWidth: "200px" }}
+                              ></td>
+                            );
+                          }
+
+                          const componentData =
+                            getComponentData(componentIndex);
+                          return (
+                            <td
+                              key={colIndex}
+                              style={{ padding: "4px", minWidth: "200px" }}
+                            >
+                              <PopoverWithState
+                                componentData={componentData}
+                                index={componentIndex}
+                              />
+                            </td>
+                          );
+                        })}
+                    </tr>
+                  );
+                });
+            })()}
+          </tbody>
+        </table>
+      </Box>
     </Box>
   );
 };
@@ -223,9 +528,11 @@ const RapidStateChangeTest = () => {
 // Main Stress Test Page
 export default function StressTestV2() {
   const [activeTest, setActiveTest] = useState("all");
+  const [componentCount, setComponentCount] = useState(100);
 
   const tests = [
     { id: "all", label: "All Tests" },
+    { id: "automated", label: "🚀 Automated Performance Test" },
     { id: "flood", label: "Component Flood" },
     { id: "state", label: "Rapid State Changes" },
     { id: "interactive", label: "Interactive Components" },
@@ -258,8 +565,14 @@ export default function StressTestV2() {
 
       <Grid templateColumns="1fr 300px" gap={6}>
         <Box>
+          {(activeTest === "all" || activeTest === "automated") && (
+            <AutomatedPerformanceTest onSetComponentCount={setComponentCount} />
+          )}
           {(activeTest === "all" || activeTest === "flood") && (
-            <ComponentFloodTest />
+            <ComponentFloodTest
+              componentCount={componentCount}
+              setComponentCount={setComponentCount}
+            />
           )}
           {(activeTest === "all" || activeTest === "state") && (
             <RapidStateChangeTest />
