@@ -363,7 +363,7 @@ const ComponentFloodTest = ({
 
   const addComponents = () => {
     const renderTime = measurePerformance(() => {
-      setComponentCount((prev) => prev + 1000);
+      setComponentCount(componentCount + 1000);
     });
     setLastRenderTime(renderTime);
   };
